@@ -1,0 +1,3 @@
+oracle服务root用户 ：  root/helowin
+
+exp biz_hg/biz_hg@HELOWIN file="/biz_hg.dmp" full = y;
