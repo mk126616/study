@@ -1,3 +1,76 @@
+# mvn子项目单独打可执行jar包
+
+mvn自带的打包工具默认不会把香满园依赖的jar包打进去，如果要单独作为jar包运行的话需要在pom上配置**spring-boot-maven-plugin**插件，但是
+
+父项目在单独打包时引入了**spring-boot-maven-plugin**插件则直接打成可运行jar包，微服务子项目在打包时引入**spring-boot-maven-plugin**插件后还需要配置**epackage**参数才行。配置了**spring-boot-maven-plugin**插件打包后的jar包会进行二次打包，包中文件路径发生变化，并且不能被别的项目引用，因此打包时只作为公共资源jar包而不单独运行的jar包不能够添加**spring-boot-maven-plugin**插件。    
+
+```xml
+<build>
+    <!--        mvn默认只会把resources下的文件打包进去，resources底下的文件夹也不行，需要添加下打包资源-->
+    <resources>
+        <resource>
+            <directory>${basedir}/src/main/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+                <include>**/*.xml</include>
+                <include>**/*.yml</include>
+            </includes>
+
+        </resource>
+        <resource>
+            <directory>${basedir}/src/main/java</directory>
+            <filtering>true</filtering>
+            <includes>
+                <include>**/*.xml</include>
+            </includes>
+        </resource>
+    </resources>
+    <plugins>
+        <!--            此插件会在打包时把项目中依赖的jar包全部打进去，默认不打进去的-->
+        <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            //子项目默认不进行二次打包，需要配置此属性才可以生成单独运行的jar包
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>repackage</goal>
+                    </goals>
+                </execution>
+            </executions>
+        </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+                <source>8</source>
+                <target>8</target>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+# mvn依赖的传递性
+
+mvn在通过pom引入jar包时会传递的引入jar中依赖的jar包，引入的jar包pom中的依赖jar包必须指明版本号，并且不能通过父项目指定，必须直接指定。
+
+# idea中多个微服务管理仪表盘配置
+
+项目idea目录workspace.xml中增加如下配置即可：
+
+```xml
+<component name="RunDashboard">
+    <option name="configurationTypes">
+      <set>
+        <option value="SpringBootApplicationConfigurationType" />
+      </set>
+    </option>
+  </component>
+```
+
+
+
 # 微服务架构概念：
 
 将一个大型的项目按照功能模块拆分为单体服务应用，模块之间松耦合，每个应用之间独立开发独立部署，并且所有服务之间通过轻量级的通信方式（如：restful风格的http请求进行通信）协调作用，为用户提供一个完整的应用服务。
